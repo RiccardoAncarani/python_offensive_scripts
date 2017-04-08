@@ -10,6 +10,9 @@ class XssFuzzer:
 	"\" onerror=\"alert(1)\""
 	]
 
+	def __init__(self, verbose=False):
+		self.verbosity = verbose
+
 	def getPayloads(self):
 		return self.payloads
 
@@ -37,7 +40,9 @@ class XssFuzzer:
 			for payload in self.payloads:
 				fuzz_dict[key] = payload
 				r = requests.post(url, data=fuzz_dict, cookies=cookie)
-				self.gitDiff(r.text)
+				
+				if self.verbosity:
+					self.gitDiff(r.text)
 				
 				if self.checkResult(r.text, payload):
 					print "[!] Found payload: "+ payload + " in body for param: " + key
@@ -60,10 +65,15 @@ def main():
 					  dest="cookie",
 					  default=None,
 					  help="The cookie to send",)
+	parser.add_option("-v", "--verbose",
+					  action="store_true", # optional because action defaults to "store"
+					  dest="verbose",
+					  default=False,
+					  help="Use git diff to spot injections",)
 	(options, args) = parser.parse_args()
 
 	if options.url:
-		xss = XssFuzzer()
+		xss = XssFuzzer(verbose=options.verbose)
 		
 		if options.data:
 			data = {}

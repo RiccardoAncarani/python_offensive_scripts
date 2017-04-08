@@ -21,22 +21,24 @@ class XssFuzzer:
 
 	def makeGoodPostRequest(self,url,data,cookie):
 		r = requests.post(url,data=data, cookies=cookie)
-		print data
 		self.good_req = tempfile.NamedTemporaryFile()
 		self.good_req.write(r.text)
 
+	def gitDiff(self, text):
+		f = tempfile.NamedTemporaryFile()
+		f.write(text)
+		os.system("git diff --unified=0 " +self.good_req.name + " " + f.name)
+		f.close()
+
 	def fuzzPost(self, url, data, cookie):
 		for key in data.keys():
-			fuzz_dict = data
+			fuzz_dict = {}
+			fuzz_dict = data.copy()
 			for payload in self.payloads:
 				fuzz_dict[key] = payload
 				r = requests.post(url, data=fuzz_dict, cookies=cookie)
-
-				f = tempfile.NamedTemporaryFile()
-				f.write(r.text)
-				os.system("git diff --unified=0 " +self.good_req.name + " " + f.name)
-				f.close()
-
+				self.gitDiff(r.text)
+				
 				if self.checkResult(r.text, payload):
 					print "[!] Found payload: "+ payload + " in body for param: " + key
 

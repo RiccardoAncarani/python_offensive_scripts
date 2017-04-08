@@ -4,6 +4,7 @@ import tempfile
 import os
 
 class XssFuzzer:
+
 	payloads = [
 	"<script>alert(1)</script>",
 	"\"><script>alert(1)</script>",
@@ -17,22 +18,37 @@ class XssFuzzer:
 		return self.payloads
 
 	def checkResult(self, body, payload):
+		'''
+		Easy assumption, if the payload is rendered in the HTML body
+		then the parameter is vulnerable to XSS.
+		Not always true btw.
+		'''
 		if payload in body:
 			return True
 		else:
 			return False
 
 	def makeGoodPostRequest(self,url,data,cookie):
+		'''
+		Make a post request with good data (no xss payloads)
+		This because it is helpful to view diffs with the malformed request
+		'''
 		r = requests.post(url,data=data, cookies=cookie)
 		self.good_req = tempfile.NamedTemporaryFile()
 		self.good_req.write(r.text)
 
 	def makeGoodGetRequest(self, url, params, cookie):
+		'''
+		Same.
+		'''
 		r = requests.get(url, params=params, cookies=cookie)
 		self.good_req = tempfile.NamedTemporaryFile()
 		self.good_req.write(r.text)
 
 	def fuzzGet(self, url, params, cookie):
+		'''
+		Fuzz get parameters with self.payloads
+		'''
 		for key in params.keys():
 			fuzz_dict = {}
 			fuzz_dict = params.copy()
@@ -48,6 +64,10 @@ class XssFuzzer:
 
 
 	def gitDiff(self, text):
+		'''
+		You need git to be installed in your machine.
+		Helps spotting the differences between good and bad requests
+		'''
 		f = tempfile.NamedTemporaryFile()
 		f.write(text)
 		os.system("git diff --unified=0 " +self.good_req.name + " " + f.name)
@@ -76,17 +96,17 @@ def main():
 					  default=None,
 					  help="Specify the target URL")
 	parser.add_option("-d", "--data",
-					  action="store", # optional because action defaults to "store"
+					  action="store", 
 					  dest="data",
 					  default=None,
 					  help="The POST data to fuzz",)
 	parser.add_option("-c", "--cookie",
-					  action="store", # optional because action defaults to "store"
+					  action="store",
 					  dest="cookie",
 					  default=None,
 					  help="The cookie to send",)
 	parser.add_option("-v", "--verbose",
-					  action="store_true", # optional because action defaults to "store"
+					  action="store_true", 
 					  dest="verbose",
 					  default=False,
 					  help="Use git diff to spot injections",)

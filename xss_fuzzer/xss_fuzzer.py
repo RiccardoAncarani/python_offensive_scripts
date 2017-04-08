@@ -27,6 +27,26 @@ class XssFuzzer:
 		self.good_req = tempfile.NamedTemporaryFile()
 		self.good_req.write(r.text)
 
+	def makeGoodGetRequest(self, url, params, cookie):
+		r = requests.get(url, params=params, cookies=cookie)
+		self.good_req = tempfile.NamedTemporaryFile()
+		self.good_req.write(r.text)
+
+	def fuzzGet(self, url, params, cookie):
+		for key in params.keys():
+			fuzz_dict = {}
+			fuzz_dict = params.copy()
+			for payload in self.payloads:
+				fuzz_dict[key] = payload
+				r = requests.post(url, params=fuzz_dict, cookies=cookie)
+				
+				if self.verbosity:
+					self.gitDiff(r.text)
+				
+				if self.checkResult(r.text, payload):
+					print "[!] Found payload: "+ payload + " in body for param: " + key
+
+
 	def gitDiff(self, text):
 		f = tempfile.NamedTemporaryFile()
 		f.write(text)
@@ -98,7 +118,15 @@ def main():
 			xss.makeGoodPostRequest(options.url, data, cookie)
 			xss.fuzzPost(options.url, data, cookie)
 		else:
-			xss.fuzzGet(options.url,cookie) 
+			params = {}
+			def splitGet(p):
+				d = p.split("=")
+				params[d[0]] = d[1]
+
+			get = ((options.url).split("?")[1]).split("&")
+			[splitGet(p) for p in get]
+			xss.makeGoodGetRequest(options.url, params, cookie)
+			xss.fuzzGet(options.url, params, cookie) 
 				
 	else:
 		print "[-] At least we need a URL"

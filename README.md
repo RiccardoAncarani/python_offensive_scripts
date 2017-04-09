@@ -7,7 +7,7 @@ and translated them in **python** (and made them smarter).<br>
 
 ## xss_fuzzer
 An easy and stupid XSS fuzzer that fuzz all parameters (still missing headers, it's in the TODO list)
-with a small payloads list.<br>
+with a small payload list.<br>
 The script tries to detect an XSS vuln if the payload is rendered in the HTML output (but no check if the js is executed)
 The usage of the script is pretty easy (and sqlmap like):
 ```bash
